@@ -88,7 +88,7 @@ fun OtpTextField(
 }
 
 @Composable
-private fun CharView(
+fun CharView(
     index: Int,
     text: String
 ) {
