@@ -4,31 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.widget.TextView
-import android.widget.TextView.OnEditorActionListener
-import butterknife.BindView
-import butterknife.ButterKnife
-import com.alimuzaffar.lib.pin.PinEntryEditText
+import androidx.compose.ui.platform.ComposeView
 import dagger.hilt.android.AndroidEntryPoint
-import org.mifos.mobilewallet.mifospay.R
 import org.mifos.mobilewallet.mifospay.bank.ui.SetupUpiPinActivity
 import org.mifos.mobilewallet.mifospay.base.BaseFragment
 import org.mifos.mobilewallet.mifospay.common.Constants
-import org.mifos.mobilewallet.mifospay.utils.Toaster
+import org.mifos.mobilewallet.mifospay.theme.MifosTheme
 
 /**
  * Created by ankur on 13/July/2018
  */
 @AndroidEntryPoint
 class OtpFragment : BaseFragment() {
-    @JvmField
-    @BindView(R.id.tv_title)
-    var mTvTitle: TextView? = null
 
-    @JvmField
-    @BindView(R.id.pe_otp)
-    var mPeOtp: PinEntryEditText? = null
     private var otp: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,32 +30,25 @@ class OtpFragment : BaseFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val rootView = inflater.inflate(R.layout.fragment_otp, container, false) as ViewGroup
-        ButterKnife.bind(this, rootView)
-        mPeOtp!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                okayClicked()
-                return@OnEditorActionListener true
-            }
-            false
-        })
-        mPeOtp!!.requestFocus()
-        return rootView
-    }
 
-    fun okayClicked() {
-        if (activity is SetupUpiPinActivity) {
-            if (mPeOtp!!.text.toString() == otp) {
-                (activity as SetupUpiPinActivity?)!!.otpVerified()
-            } else {
-                showToast(getString(R.string.wrong_otp))
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MifosTheme {
+                    OtpScreen(realOtp =otp ?: "",
+                        onOtpTextCorrectlyEntered ={
+                        onOtpTextCorrectlyEntered()
+                    })
+                }
             }
         }
     }
 
-    fun showToast(message: String?) {
-        Toaster.showToast(activity, message)
+    fun onOtpTextCorrectlyEntered() {
+        if (activity is SetupUpiPinActivity) {
+                (activity as SetupUpiPinActivity?)!!.otpVerified()
+        }
     }
+
 
     companion object {
         fun newInstance(otp: String?): OtpFragment {
