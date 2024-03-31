@@ -35,7 +35,8 @@ import org.mifos.mobilewallet.mifospay.theme.MifosTheme
 
 @Composable
 fun UpiPinScreen(
-    onOtpTextCorrectlyReEntered: (String) -> Unit
+    onOtpTextCorrectlyReEntered: (String) -> Unit,
+    onOtpTextInCorrectlyReEntered: (String) -> Unit
 )
 {
     var upiPinTobeMatched by remember { mutableStateOf("") }
@@ -49,29 +50,26 @@ fun UpiPinScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text =if (steps == 0)
+            text = if (steps == 0)
                 stringResource(id = R.string.enter_upi_pin)
             else
                 stringResource(id = R.string.reenter_upi),
             color = Color(0xFF1E90FF),
             fontSize = 18.sp
         )
-        BasicTextField(
+        if (steps == 0) {
+            BasicTextField(
                 value = TextFieldValue(upiPin, selection = TextRange(upiPin.length)),
                 onValueChange = {
                     upiPin = it.text
                     if (upiPin.length == 4) {
-                           steps= 1
-                        upiPinTobeMatched = upiPin
-                        upiPin = ""
+                        steps = 1
                     }
                 },
                 keyboardActions = KeyboardActions(onDone =
                 {
-                    if (steps==1) {
-                        if (upiPin.length == 4) {
-                            onOtpTextCorrectlyReEntered(upiPin)
-                        }
+                    if (upiPin.length == 4) {
+                        onOtpTextCorrectlyReEntered(upiPin)
                     }
                 }),
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -89,11 +87,60 @@ fun UpiPinScreen(
                         }
                     }
                 },
-                modifier =Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             )
         }
+        else
+        {
+            BasicTextField(
+                value = TextFieldValue(upiPinTobeMatched, selection = TextRange(upiPinTobeMatched.length)),
+                onValueChange = {
+                    upiPinTobeMatched = it.text
+                    if (upiPinTobeMatched.length == 4) {
+                        if (upiPinTobeMatched == upiPin) {
+                            onOtpTextCorrectlyReEntered(upiPin)
+                        }
+                        else
+                        {
+                            onOtpTextCorrectlyReEntered("Invalid UPI PIN")
+                        }
+                    }
+                },
+                keyboardActions = KeyboardActions(onDone =
+                {
+                    if (upiPinTobeMatched.length == 4) {
+                        if (upiPinTobeMatched == upiPin) {
+                            onOtpTextCorrectlyReEntered(upiPin)
+                        }
+                    }
+                    else
+                    {
+                        onOtpTextInCorrectlyReEntered("Invalid UPI PIN")
+                    }
+                }),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                decorationBox = {
+                    Row(horizontalArrangement = Arrangement.Center) {
+                        repeat(4) { index ->
+                            CharView(
+                                index = index,
+                                text = upiPinTobeMatched
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+    }
 }
 
 @Preview
@@ -101,7 +148,8 @@ fun UpiPinScreen(
 fun UpiScreenPreview() {
     MifosTheme {
         UpiPinScreen(
-            onOtpTextCorrectlyReEntered = {}
+            onOtpTextCorrectlyReEntered = {},
+            onOtpTextInCorrectlyReEntered = {}
         )
     }
 }
