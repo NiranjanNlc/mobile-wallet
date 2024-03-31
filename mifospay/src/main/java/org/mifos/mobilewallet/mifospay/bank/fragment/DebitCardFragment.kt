@@ -10,113 +10,117 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView.OnEditorActionListener
+import androidx.compose.ui.platform.ComposeView
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import butterknife.BindView
-import butterknife.ButterKnife
 import com.alimuzaffar.lib.pin.PinEntryEditText
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.mifos.mobilewallet.mifospay.R
-import org.mifos.mobilewallet.mifospay.bank.BankContract
-import org.mifos.mobilewallet.mifospay.bank.BankContract.DebitCardView
-import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardPresenter
+import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardUiState
+import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardViewModel
 import org.mifos.mobilewallet.mifospay.bank.ui.SetupUpiPinActivity
 import org.mifos.mobilewallet.mifospay.base.BaseFragment
 import org.mifos.mobilewallet.mifospay.common.Constants
+import org.mifos.mobilewallet.mifospay.databinding.FragmentDebitCardBinding
 import org.mifos.mobilewallet.mifospay.utils.Toaster
-import javax.inject.Inject
 
 /**
  * Created by ankur on 13/July/2018
  */
 @AndroidEntryPoint
-class DebitCardFragment : BaseFragment(), DebitCardView {
-    @JvmField
-    @Inject
-    var mPresenter: DebitCardPresenter? = null
-    var mDebitCardPresenter: BankContract.DebitCardPresenter? = null
+class DebitCardFragment : BaseFragment(){
 
-    @JvmField
-    @BindView(R.id.et_debit_card_number)
-    var mEtDebitCardNumber: EditText? = null
+    private val debitCardViewModel: DebitCardViewModel by viewModels()
 
-    @JvmField
-    @BindView(R.id.pe_month)
-    var mPeMonth: PinEntryEditText? = null
 
-    @JvmField
-    @BindView(R.id.pe_year)
-    var mPeYear: PinEntryEditText? = null
+    lateinit var binding : FragmentDebitCardBinding
     var key = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val rootView = inflater.inflate(
-            R.layout.fragment_debit_card,
-            container, false
-        ) as ViewGroup
-        ButterKnife.bind(this, rootView)
-        mPresenter!!.attachView(this)
-        mPeYear!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                okayClicked()
-                return@OnEditorActionListener true
-            }
-            false
-        })
-        mPeMonth!!.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                if (s.length == 2) {
-                    mPeYear!!.requestFocus()
-                }
-            }
+        //DebitCardScreen as jetpack Compose
 
-            override fun afterTextChanged(s: Editable) {}
-        })
-        mPeYear!!.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DEL && mPeYear!!.length() == 0) {
-                if (key) {
-                    mPeMonth!!.requestFocus()
-                    mPeMonth!!.dispatchKeyEvent(
-                        KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL)
-                    )
-                    key = false
-                    return@OnKeyListener false
-                }
-                key = true
+        return ComposeView(requireContext()).apply {
+            setContent {
+                DebitCardScreen()
             }
-            false
-        })
-        return rootView
+//        binding = FragmentDebitCardBinding.inflate(inflater, container, false)
+//        binding.peYear!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+//            if (actionId == EditorInfo.IME_ACTION_DONE) {
+//                okayClicked()
+//                return@OnEditorActionListener true
+//            }
+//            false
+//        })
+//        binding.peMonth!!.addTextChangedListener(object : TextWatcher {
+//            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+//            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+//                if (s.length == 2) {
+//                    binding.peYear!!.requestFocus()
+//                }
+//            }
+//
+//            override fun afterTextChanged(s: Editable) {}
+//        })
+//        binding.peYear!!.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+//            if (keyCode == KeyEvent.KEYCODE_DEL && binding.peYear!!.length() == 0) {
+//                if (key) {
+//                    binding.peMonth!!.requestFocus()
+//                    binding.peMonth!!.dispatchKeyEvent(
+//                        KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL)
+//                    )
+//                    key = false
+//                    return@OnKeyListener false
+//                }
+//                key = true
+//            }
+//            false
+//        })
+//        return binding.root
+    }
+
+//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+//        super.onViewCreated(view, savedInstanceState)
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            debitCardViewModel.debitCardUiState.collect { uiState ->
+//                when (uiState) {
+//                    is DebitCardUiState.Initials -> {
+//                        // do nothing
+//                    }
+//
+//                    is DebitCardUiState.Verifying -> {
+//                        showProgressDialog(Constants.PLEASE_WAIT)
+//                    }
+//
+//                    is DebitCardUiState.Verified -> {
+//                        hideProgressDialog()
+//                        if (activity is SetupUpiPinActivity) {
+//                            (activity as SetupUpiPinActivity?)!!.debitCardVerified(uiState.otp)
+//                        }
+//                    }
+//
+//                    is DebitCardUiState.VerificationFailed -> {
+//                        hideProgressDialog()
+//                        binding.etDebitCardNumber!!.requestFocusFromTouch()
+//                        showToast(uiState.errorMessage)
+//                    }
+//                }
+//            }
+//        }
     }
 
     private fun okayClicked() {
         showProgressDialog(Constants.PLEASE_WAIT)
-        mDebitCardPresenter!!.verifyDebitCard(mEtDebitCardNumber!!.text
+        debitCardViewModel.verifyDebitCard(binding.etDebitCardNumber!!.text
             .toString().trim { it <= ' ' },
-            mPeMonth!!.text.toString(),
-            mPeYear!!.text.toString()
+            binding.peMonth!!.text.toString(),
+            binding.peYear!!.text.toString()
         )
     }
-
-    override fun verifyDebitCardSuccess(otp: String?) {
-        hideProgressDialog()
-        if (activity is SetupUpiPinActivity) {
-            (activity as SetupUpiPinActivity?)!!.debitCardVerified(otp)
-        }
-    }
-
-    override fun verifyDebitCardError(message: String?) {
-        hideProgressDialog()
-        mEtDebitCardNumber!!.requestFocusFromTouch()
-        showToast(message)
-    }
-
-    override fun setPresenter(presenter: BankContract.DebitCardPresenter?) {
-        mDebitCardPresenter = presenter
-    }
-
     fun showToast(message: String?) {
         Toaster.showToast(activity, message)
     }

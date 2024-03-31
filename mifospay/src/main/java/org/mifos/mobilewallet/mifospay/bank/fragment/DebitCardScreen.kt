@@ -18,8 +18,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -30,48 +37,81 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mifos.mobilewallet.mifospay.R
+import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardUiState
+import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardViewModel
+import org.mifos.mobilewallet.mifospay.bank.ui.SetupUpiPinActivity
+import org.mifos.mobilewallet.mifospay.common.Constants
+import org.mifos.mobilewallet.mifospay.designsystem.component.MfLoadingWheel
 import org.mifos.mobilewallet.mifospay.theme.MifosTheme
+import org.mifos.mobilewallet.mifospay.utils.Toaster.showToast
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DebitCardScreen(
-    modifier: Modifier = Modifier
-)
-{
+    viewModel: DebitCardViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    onDebitCardVerified : (String) -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+
+    val context = LocalContext.current
+
     var cardNumber by remember { mutableStateOf("") }
     var month by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("") }
+
+    val debitCardUiState by viewModel.debitCardUiState.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
     ) {
+        val (a, b, c) = FocusRequester.createRefs()
 
         OutlinedTextField(
-            value = "",
-            onValueChange = { /* Handle value change */ },
+            value = cardNumber,
+            onValueChange = { cardNumber = it },
             label = { Text(text = "Debit Card Number") },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType =
-            KeyboardType.Number),
-            keyboardActions = KeyboardActions(
-                onNext = { /* Handle next action */ }
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
             ),
-            modifier = Modifier.fillMaxWidth()
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.moveFocus(FocusDirection.Next)
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(a)
+                .focusProperties {
+                    next = b
+                }
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(12.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             BasicTextField(
-                modifier = modifier,
+                modifier = Modifier
+                    .focusRequester(b)
+                    .focusProperties {
+                        next = c
+                    },
                 value = TextFieldValue(month, selection = TextRange(month.length)),
                 onValueChange = {
-                     month = it.text
+                    month = it.text
                 },
                 keyboardActions = KeyboardActions(onDone =
                 {
+                    focusManager.moveFocus(FocusDirection.Next)
 
                 }),
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -97,21 +137,29 @@ fun DebitCardScreen(
             )
 
             BasicTextField(
-                modifier = modifier,
-                value = TextFieldValue(year, selection = TextRange(month.length)),
+                modifier = Modifier
+                    .focusRequester(c)
+                    .focusProperties {
+                        next = a
+                    },
+                value = TextFieldValue(year, selection = TextRange(year.length)),
                 onValueChange = {
-                    year  = it.text
+                    year = it.text
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
+                keyboardActions = KeyboardActions(onDone =
+                {
+                    viewModel.verifyDebitCard(cardNumber, month, year)
+                }),
                 decorationBox = {
                     Row(horizontalArrangement = Arrangement.Center) {
                         repeat(4) { index ->
                             CharView(
                                 index = index,
-                                text = month
+                                text = year
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
@@ -120,13 +168,51 @@ fun DebitCardScreen(
             )
         }
     }
+    when (debitCardUiState) {
+        is DebitCardUiState.Initials -> {
+            // do nothing
+        }
+
+        is DebitCardUiState.Verifying -> {
+            MfLoadingWheel(
+                contentDesc = Constants.PLEASE_WAIT,
+                backgroundColor = Color.White
+            )
+        }
+
+        is DebitCardUiState.Verified -> {
+            onDebitCardVerified((debitCardUiState as DebitCardUiState.Verified).otp)
+            println("here is ui state verified " )
+            if (context is SetupUpiPinActivity) {
+                (context as SetupUpiPinActivity)
+                    .debitCardVerified((debitCardUiState as DebitCardUiState.Verified).otp)
+            }
+            else
+            {
+                println("context is not SetupUpiPinActivity")
+            }
+        }
+
+        is DebitCardUiState.VerificationFailed -> {
+//            focusManager.moveFocus(FocusDirection.Next)
+            var toastShown = false
+            if (!toastShown) {
+                showToast(
+                    context,
+                    (debitCardUiState as DebitCardUiState.VerificationFailed).errorMessage
+                )
+                toastShown = true
+            }
+        }
+    }
 }
 
 @Preview
 @Composable
 fun DebitCardScreenPreview() {
     MifosTheme {
-       DebitCardScreen(
+        DebitCardScreen(
+            onDebitCardVerified = {}
         )
     }
 }

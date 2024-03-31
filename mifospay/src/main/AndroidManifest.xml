@@ -38,11 +38,11 @@
             android:name=".SplashScreenActivity"
             android:theme="@style/SplashScreenTheme"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
         </activity>
         <activity
             android:name=".feature.auth.login.LoginActivity"
@@ -158,9 +158,16 @@
         <activity
             android:name=".bank.ui.BankAccountDetailActivity"
             android:theme="@style/AppTheme" />
+
         <activity
             android:name=".bank.ui.SetupUpiPinActivity"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".notification.ui.NotificationActivity"
             android:theme="@style/AppTheme" />

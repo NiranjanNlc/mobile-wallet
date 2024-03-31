@@ -21,6 +21,7 @@ import org.mifos.mobilewallet.mifospay.bank.presenter.SetupUpiPinPresenter
 import org.mifos.mobilewallet.mifospay.base.BaseActivity
 import org.mifos.mobilewallet.mifospay.utils.AnimationUtil
 import org.mifos.mobilewallet.mifospay.common.Constants
+import org.mifos.mobilewallet.mifospay.databinding.ActivitySetupUpiPinBinding
 import org.mifos.mobilewallet.mifospay.utils.Toaster
 import javax.inject.Inject
 
@@ -65,46 +66,59 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
     private var bankAccountDetails: BankAccountDetails? = null
     private var index = 0
     private var type: String? = null
+
+    lateinit var binding : ActivitySetupUpiPinBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_setup_upi_pin)
-        ButterKnife.bind(this)
+        binding = ActivitySetupUpiPinBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+//        ButterKnife.bind(this)
         showColoredBackButton(R.drawable.ic_arrow_back_black_24dp)
         setToolbarTitle(Constants.SETUP_UPI_PIN)
         mPresenter!!.attachView(this)
         val b = intent.extras
-        bankAccountDetails = b!!.getParcelable(Constants.BANK_ACCOUNT_DETAILS)
-        index = b.getInt(Constants.INDEX)
-        type = b.getString(Constants.TYPE)
+//        bankAccountDetails = b!!.getParcelable(Constants.BANK_ACCOUNT_DETAILS)
+//        index = b.getInt(Constants.INDEX)
+//        type = b.getString(Constants.TYPE)
+        initialize(b)
         if (type == Constants.CHANGE) {
             mSetupUpiPinPresenter!!.requestOtp(bankAccountDetails)
-            mFlDebitCard!!.visibility = View.GONE
-            mCvDebitCard!!.visibility = View.GONE
+            binding.flDebitCard!!.visibility = View.GONE
+            binding.cvDebitCard!!.visibility = View.GONE
             setToolbarTitle(Constants.CHANGE_UPI_PIN)
         } else if (type == Constants.FORGOT) {
-            mFlDebitCard!!.visibility = View.VISIBLE
-            mCvDebitCard!!.visibility = View.VISIBLE
+            binding.flDebitCard!!.visibility = View.VISIBLE
+            binding.cvDebitCard!!.visibility = View.VISIBLE
             setToolbarTitle(Constants.FORGOT_UPI_PIN)
         } else {
-            mFlDebitCard!!.visibility = View.VISIBLE
-            mCvDebitCard!!.visibility = View.VISIBLE
+            binding.flDebitCard!!.visibility = View.VISIBLE
+            binding.cvDebitCard!!.visibility = View.VISIBLE
             setToolbarTitle(Constants.SETUP_UPI_PIN)
         }
         addFragment(DebitCardFragment(), R.id.fl_debit_card)
     }
 
+    private fun initialize(b: Bundle?) {
+        bankAccountDetails =  BankAccountDetails(
+            "SBI", "Ankur Sharma", "New Delhi",
+            "XXXXXXXX9990XXX " + " ", "Savings"
+        )
+        index = 0
+        type =Constants.FORGOT
+    }
+
     override fun debitCardVerified(otp: String?) {
-        mTvDebitCard!!.visibility = View.VISIBLE
+        binding.tvDebitCard!!.visibility = View.VISIBLE
         addFragment(OtpFragment.newInstance(otp), R.id.fl_otp)
-        mFlDebitCard?.let { AnimationUtil.collapse(it) }
-        mFlOtp?.let { AnimationUtil.expand(it) }
+        binding.flDebitCard?.let { AnimationUtil.collapse(it) }
+        binding.flOtp?.let { AnimationUtil.expand(it) }
     }
 
     fun otpVerified() {
-        mTvOtp!!.visibility = View.VISIBLE
+        binding.tvOtp!!.visibility = View.VISIBLE
         addFragment(UpiPinFragment(), R.id.fl_upi_pin)
-        mFlUpiPin?.let { AnimationUtil.expand(it) }
-        mFlOtp?.let { AnimationUtil.collapse(it) }
+        binding.flUpiPin?.let { AnimationUtil.expand(it) }
+        binding.flOtp?.let { AnimationUtil.collapse(it) }
     }
 
     fun upiPinEntered(upiPin: String?) {
@@ -112,7 +126,7 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
     }
 
     fun upiPinConfirmed(upiPin: String?) {
-        mTvUpi!!.visibility = View.VISIBLE
+        binding.tvUpi!!.visibility = View.VISIBLE
         showProgressDialog(Constants.SETTING_UP_UPI_PIN)
         mSetupUpiPinPresenter!!.setupUpiPin(bankAccountDetails, upiPin)
     }
@@ -122,11 +136,11 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
         bankAccountDetails!!.upiPin = mSetupUpiPin
         hideProgressDialog()
         showToast(Constants.UPI_PIN_SETUP_COMPLETED_SUCCESSFULLY)
-        val intent = Intent()
-        intent.putExtra(Constants.UPDATED_BANK_ACCOUNT, bankAccountDetails)
-        intent.putExtra(Constants.INDEX, index)
-        setResult(RESULT_OK, intent)
-        finish()
+//        val intent = Intent()
+//        intent.putExtra(Constants.UPDATED_BANK_ACCOUNT, bankAccountDetails)
+//        intent.putExtra(Constants.INDEX, index)
+//        setResult(RESULT_OK, intent)
+//        finish()
     }
 
     override fun setupUpiPinError(message: String?) {
