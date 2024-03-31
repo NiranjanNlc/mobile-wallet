@@ -27,19 +27,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.mifos.mobilewallet.mifospay.R
 import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardUiState
 import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardViewModel
 import org.mifos.mobilewallet.mifospay.bank.ui.SetupUpiPinActivity
@@ -53,7 +49,8 @@ import org.mifos.mobilewallet.mifospay.utils.Toaster.showToast
 fun DebitCardScreen(
     viewModel: DebitCardViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
-    onDebitCardVerified : (String) -> Unit
+    onDebitCardVerified: (String) -> Unit,
+    onDebitCardVerificationFailed:(String) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -96,7 +93,7 @@ fun DebitCardScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             BasicTextField(
@@ -108,6 +105,9 @@ fun DebitCardScreen(
                 value = TextFieldValue(month, selection = TextRange(month.length)),
                 onValueChange = {
                     month = it.text
+                    if (month.length == 2) {
+                        focusManager.moveFocus(FocusDirection.Next)
+                    }
                 },
                 keyboardActions = KeyboardActions(onDone =
                 {
@@ -182,27 +182,10 @@ fun DebitCardScreen(
 
         is DebitCardUiState.Verified -> {
             onDebitCardVerified((debitCardUiState as DebitCardUiState.Verified).otp)
-            println("here is ui state verified " )
-            if (context is SetupUpiPinActivity) {
-                (context as SetupUpiPinActivity)
-                    .debitCardVerified((debitCardUiState as DebitCardUiState.Verified).otp)
-            }
-            else
-            {
-                println("context is not SetupUpiPinActivity")
-            }
         }
 
         is DebitCardUiState.VerificationFailed -> {
-//            focusManager.moveFocus(FocusDirection.Next)
-            var toastShown = false
-            if (!toastShown) {
-                showToast(
-                    context,
-                    (debitCardUiState as DebitCardUiState.VerificationFailed).errorMessage
-                )
-                toastShown = true
-            }
+            onDebitCardVerificationFailed((debitCardUiState as DebitCardUiState.VerificationFailed).errorMessage)
         }
     }
 }
@@ -212,7 +195,8 @@ fun DebitCardScreen(
 fun DebitCardScreenPreview() {
     MifosTheme {
         DebitCardScreen(
-            onDebitCardVerified = {}
+            onDebitCardVerified = {},
+            onDebitCardVerificationFailed = {}
         )
     }
 }

@@ -1,24 +1,12 @@
 package org.mifos.mobilewallet.mifospay.bank.fragment
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
-import android.widget.TextView.OnEditorActionListener
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import butterknife.BindView
-import com.alimuzaffar.lib.pin.PinEntryEditText
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import org.mifos.mobilewallet.mifospay.R
-import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardUiState
 import org.mifos.mobilewallet.mifospay.bank.presenter.DebitCardViewModel
 import org.mifos.mobilewallet.mifospay.bank.ui.SetupUpiPinActivity
 import org.mifos.mobilewallet.mifospay.base.BaseFragment
@@ -46,7 +34,15 @@ class DebitCardFragment : BaseFragment(){
 
         return ComposeView(requireContext()).apply {
             setContent {
-                DebitCardScreen()
+                DebitCardScreen(
+                    viewModel = debitCardViewModel,
+                    onDebitCardVerified = { otp ->
+                        verifyDebitCardSuccess(otp)
+                    },
+                    onDebitCardVerificationFailed = { message ->
+                        verifyDebitCardError(message)
+                    }
+                )
             }
 //        binding = FragmentDebitCardBinding.inflate(inflater, container, false)
 //        binding.peYear!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
@@ -112,7 +108,17 @@ class DebitCardFragment : BaseFragment(){
 //            }
 //        }
     }
+     fun verifyDebitCardSuccess(otp: String?) {
+        hideProgressDialog()
+        if (activity is SetupUpiPinActivity) {
+            (activity as SetupUpiPinActivity?)!!.debitCardVerified(otp)
+        }
+    }
 
+   fun verifyDebitCardError(message: String?) {
+        hideProgressDialog()
+        showToast(message)
+    }
     private fun okayClicked() {
         showProgressDialog(Constants.PLEASE_WAIT)
         debitCardViewModel.verifyDebitCard(binding.etDebitCardNumber!!.text

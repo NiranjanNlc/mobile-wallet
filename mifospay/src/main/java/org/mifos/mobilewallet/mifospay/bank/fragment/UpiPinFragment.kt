@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
+import androidx.compose.ui.platform.ComposeView
 import butterknife.BindView
 import butterknife.ButterKnife
 import com.alimuzaffar.lib.pin.PinEntryEditText
@@ -26,51 +27,68 @@ import javax.inject.Inject
  * Created by ankur on 13/July/2018
  */
 @AndroidEntryPoint
-class UpiPinFragment : BaseFragment(), UpiPinView {
-    @JvmField
-    @Inject
-    var mPresenter: UpiPinPresenter? = null
-    var mUpiPinPresenter: BankContract.UpiPinPresenter? = null
+class UpiPinFragment : BaseFragment()
+//    , UpiPinView
+{
+//    @JvmField
+//    @Inject
+//    var mPresenter: UpiPinPresenter? = null
+//    var mUpiPinPresenter: BankContract.UpiPinPresenter? = null
 
-    @JvmField
-    @BindView(R.id.tv_title)
-    var mTvTitle: TextView? = null
-
-    @JvmField
-    @BindView(R.id.pe_upi_pin)
-    var mPeUpiPin: PinEntryEditText? = null
+//    @JvmField
+//    @BindView(R.id.tv_title)
+//    var mTvTitle: TextView? = null
+//
+//    @JvmField
+//    @BindView(R.id.pe_upi_pin)
+//    var mPeUpiPin: PinEntryEditText? = null
     private var step = 0
     private var upiPin: String? = null
 
     lateinit var binding : FragmentUpiPinSetupBinding
+//    override fun onCreateView(
+//        inflater: LayoutInflater, container: ViewGroup?,
+//        savedInstanceState: Bundle?
+//    ): View? {
+//        binding = FragmentUpiPinSetupBinding.inflate(inflater, container, false)
+////        val rootView = inflater.inflate(
+////            R.layout.fragment_upi_pin_setup,
+////            container, false
+////        ) as ViewGroup
+////        ButterKnife.bind(this, rootView)
+////        mPresenter!!.attachView(this)
+//        val b = arguments
+//        if (b != null) {
+//            step = b.getInt(Constants.STEP, 0)
+//            upiPin = b.getString(Constants.UPI_PIN, null)
+//            binding.tvTitle!!.setText(R.string.reenter_upi)
+//        }
+//        binding.peUpiPin!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+//            if (actionId == EditorInfo.IME_ACTION_DONE) {
+//                okayClicked()
+//                return@OnEditorActionListener true
+//            }
+//            false
+//        })
+//        binding.peUpiPin!!.requestFocus()
+//        return binding.root
+//    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentUpiPinSetupBinding.inflate(inflater, container, false)
-//        val rootView = inflater.inflate(
-//            R.layout.fragment_upi_pin_setup,
-//            container, false
-//        ) as ViewGroup
-//        ButterKnife.bind(this, rootView)
-        mPresenter!!.attachView(this)
-        val b = arguments
-        if (b != null) {
-            step = b.getInt(Constants.STEP, 0)
-            upiPin = b.getString(Constants.UPI_PIN, null)
-            binding.tvTitle!!.setText(R.string.reenter_upi)
-        }
-        binding.peUpiPin!!.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                okayClicked()
-                return@OnEditorActionListener true
+        //compose view of UpiPinScreen
+        return ComposeView(requireContext()).apply {
+            setContent {
+                UpiPinScreen(
+                    onOtpTextCorrectlyReEntered = { upiPin ->
+                        upiCoreectlyRentered(upiPin)
+                    }
+                )
             }
-            false
-        })
-        binding.peUpiPin!!.requestFocus()
-        return binding.root
+        }
     }
-
     fun okayClicked() {
         if (activity is SetupUpiPinActivity) {
             if (binding.peUpiPin!!.text.toString().length == 4) {
@@ -91,6 +109,16 @@ class UpiPinFragment : BaseFragment(), UpiPinView {
         }
     }
 
+    fun upiCoreectlyRentered(upiPin:String) {
+        if (activity is SetupUpiPinActivity) {
+            (activity as SetupUpiPinActivity?)!!.upiPinConfirmed(upiPin)
+        }
+    }
+
+    fun upiPinIncorrectlyRentered (message: String?) {
+        showToast(message)
+    }
+
     fun showToast(message: String?) {
         Toaster.showToast(activity, message)
     }
@@ -106,7 +134,7 @@ class UpiPinFragment : BaseFragment(), UpiPinView {
         }
     }
 
-    override fun setPresenter(presenter: BankContract.UpiPinPresenter?) {
-        mUpiPinPresenter = presenter
-    }
+//    override fun setPresenter(presenter: BankContract.UpiPinPresenter?) {
+//        mUpiPinPresenter = presenter
+//    }
 }

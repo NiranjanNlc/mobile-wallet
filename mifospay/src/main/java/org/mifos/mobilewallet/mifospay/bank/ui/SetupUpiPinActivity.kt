@@ -32,37 +32,6 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
     var mPresenter: SetupUpiPinPresenter? = null
     var mSetupUpiPinPresenter: BankContract.SetupUpiPinPresenter? = null
 
-    @JvmField
-    @BindView(R.id.fl_debit_card)
-    var mFlDebitCard: FrameLayout? = null
-
-    @JvmField
-    @BindView(R.id.toolbar)
-    var mToolbar: Toolbar? = null
-
-    @JvmField
-    @BindView(R.id.fl_otp)
-    var mFlOtp: FrameLayout? = null
-
-    @JvmField
-    @BindView(R.id.fl_upi_pin)
-    var mFlUpiPin: FrameLayout? = null
-
-    @JvmField
-    @BindView(R.id.cv_debit_card)
-    var mCvDebitCard: CardView? = null
-
-    @JvmField
-    @BindView(R.id.tv_debit_card)
-    var mTvDebitCard: TextView? = null
-
-    @JvmField
-    @BindView(R.id.tv_otp)
-    var mTvOtp: TextView? = null
-
-    @JvmField
-    @BindView(R.id.tv_upi)
-    var mTvUpi: TextView? = null
     private var bankAccountDetails: BankAccountDetails? = null
     private var index = 0
     private var type: String? = null
@@ -72,7 +41,6 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
         super.onCreate(savedInstanceState)
         binding = ActivitySetupUpiPinBinding.inflate(layoutInflater)
         setContentView(binding.root)
-//        ButterKnife.bind(this)
         showColoredBackButton(R.drawable.ic_arrow_back_black_24dp)
         setToolbarTitle(Constants.SETUP_UPI_PIN)
         mPresenter!!.attachView(this)
@@ -136,11 +104,11 @@ class SetupUpiPinActivity : BaseActivity(), SetupUpiPinView {
         bankAccountDetails!!.upiPin = mSetupUpiPin
         hideProgressDialog()
         showToast(Constants.UPI_PIN_SETUP_COMPLETED_SUCCESSFULLY)
-//        val intent = Intent()
-//        intent.putExtra(Constants.UPDATED_BANK_ACCOUNT, bankAccountDetails)
-//        intent.putExtra(Constants.INDEX, index)
-//        setResult(RESULT_OK, intent)
-//        finish()
+        val intent = Intent()
+        intent.putExtra(Constants.UPDATED_BANK_ACCOUNT, bankAccountDetails)
+        intent.putExtra(Constants.INDEX, index)
+        setResult(RESULT_OK, intent)
+        finish()
     }
 
     override fun setupUpiPinError(message: String?) {
